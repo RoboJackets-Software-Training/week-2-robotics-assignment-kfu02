@@ -34,7 +34,7 @@ private:
 LightController::LightController() {
   my_state = "red";
   remaining_time = 1;
-  // equivalent to changeState("red", 1);
+  // equivalent to changeState("red");
 }
 
 LightOutputs LightController::update(LightInputs input) {
