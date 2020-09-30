@@ -25,16 +25,48 @@ public:
 
 private:
   std::string my_state;
-  int remaining_time; // in my_state
-  std::string printOutput(LightOutputs output);
-  void changeState(std::string new_state, int new_rem_time);
+  int remaining_time; // before my_state changes
+
+  void changeState(std::string new_state);
   LightOutputs translateMyState();
 };
 
 LightController::LightController() {
   my_state = "red";
   remaining_time = 1;
-  // changeState("red", 1);
+  // equivalent to changeState("red", 1);
+}
+
+LightOutputs LightController::update(LightInputs input) {
+  if (remaining_time == 0) { // when no time remaining, change to proper next state
+    if (my_state == "red") {
+      if (input.car_sensor_n || input.car_sensor_s) {
+        changeState("ns_green");
+      } else {
+        changeState("ew_green");
+      }
+    } else if (my_state == "ew_green") {
+      changeState("ew_yellow");
+    } else if (my_state == "ns_green") {
+      changeState("ns_yellow");
+    } else if (my_state == "ew_yellow" || my_state == "ns_yellow") {
+      changeState("red");
+    }
+  }
+  // decrement time, return current state in LightOutput form
+  remaining_time--;
+  return translateMyState();
+}
+
+//update state, remaining time
+void LightController::changeState(std::string new_state) {
+  my_state = new_state;
+  remaining_time = 1; // assume "red"
+  if (new_state == "ew_green" || new_state == "ns_green") {
+    remaining_time = 5;
+  } else if (my_state == "ew_yellow" || my_state == "ns_yellow") {
+    remaining_time = 2;
+  }
 }
 
 LightOutputs LightController::translateMyState() {
@@ -49,33 +81,7 @@ LightOutputs LightController::translateMyState() {
     } else if (my_state == "ns_yellow") {
         return {false, true, false, true, false, false};
     }
-    // no other my_state options
-}
-
-LightOutputs LightController::update(LightInputs input) {
-  if (remaining_time == 0) {
-    if (my_state == "red") {
-      if (input.car_sensor_n || input.car_sensor_s) {
-        changeState("ns_green", 5);
-      } else {
-        changeState("ew_green", 5);
-      }
-    } else if (my_state == "ew_green") {
-      changeState("ew_yellow", 2);
-    } else if (my_state == "ns_green") {
-      changeState("ns_yellow", 2);
-    } else if (my_state == "ew_yellow" || my_state == "ns_yellow") {
-      changeState("red", 1);
-    }
-  }
-
-  remaining_time--;
-  return translateMyState();
-}
-
-void LightController::changeState(std::string new_state, int new_rem_time) {
-  my_state = new_state;
-  remaining_time = new_rem_time;
+    // no other my_state options, ignore compiler warning
 }
 
 int main()
